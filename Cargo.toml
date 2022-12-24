@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Le Turt <89463679+LeTurt333@users.noreply.github.com>"]
 edition = "2021"
 publish = false
-resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -30,19 +29,14 @@ library = []
 
 [dependencies]
 anyhow = "1.0.66"
-chrono = { version = "0.4.23", default-features = false }
 cosmwasm-schema = "1.1.8"
 cosmwasm-std = { version = "1.1.8", default-features = true }
 cosmwasm-storage = "1.1.8"
 cw-storage-plus = "1.0.1"
 cw2 = "1.0.0"
-cw20 = "1.0.0"
-cw721 = "0.16.0"
 schemars = "0.8.11"
 serde = { version = "1.0.148", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.37" }
 
 [dev-dependencies]
 cw-multi-test = "0.16.1"
-cw20-base = { version = "1.0.0", features = ["library"] }
-cw721-base = "0.16.0"

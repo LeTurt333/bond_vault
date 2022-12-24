@@ -2,9 +2,7 @@ use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Sub;
 
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Order;
-use cosmwasm_std::entry_point;
 use cosmwasm_std::Coin;
 use cosmwasm_std::Uint128;
 use cosmwasm_std::{
@@ -12,35 +10,38 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 
+use crate::{BLOCKS_IN_WEEK, MAX_PURCHASE_AMOUNT};
 use crate::error::ContractError;
 use crate::msg::*;
 use crate::state::*;
 
-const MAX_PURCHASE_AMOUNT: u128 = 10_000_000_000_u128;
-const BLOCKS_IN_WEEK: u128 = 100_000_u128;
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Checks
-// ~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-pub fn purchase_funds_check(cost_denom: String, funds: &[Coin]) -> Result<(), ContractError> {
-    // assert denom = cost_denom
-    if funds[0].denom != cost_denom {
-        return Err(ContractError::ToDo);
-    };
+pub fn purchase_funds_check(
+    cost_denom: String, 
+    funds: &[Coin]
+) -> Result<(), ContractError> {
 
     // assert not empty
     if funds.is_empty() {
-        return Err(ContractError::ToDo);
+        return Err(ContractError::GenericError("Purchase funds empty".to_string()));
     };
+
     // assert only 1 coin
     if funds.len() != 1 {
-        return Err(ContractError::ToDo);
+        return Err(ContractError::GenericError("More than 1 coin sent".to_string()));
+    };
+
+    // assert denom = cost_denom
+    if funds[0].denom != cost_denom {
+        return Err(ContractError::GenericError("Funds used for purchase wrong denom".to_string()));
     };
 
     // assert not greater than max purchase amount
     if funds[0].amount > Uint128::from(MAX_PURCHASE_AMOUNT) {
-        return Err(ContractError::ToDo);
+        return Err(ContractError::GenericError("Purchase Amount greater than max purchase amount".to_string()));
     }
 
     Ok(())
@@ -67,23 +68,9 @@ pub fn amount_of_purchases_check(
 
 
 pub fn claim_vestable_checks(
-    //user_purchases: &[(u64, Purchase)],
-    // purchase_uuid: u64,
-    // user_wallet: Addr,
     purchase: &Purchase,
     current_block: u64
-
 ) -> Result<(), ContractError> {
-
-    // pub struct Purchase {
-    //     pub vest_period: u8,           // in weeks, 1 = 1 week, 7 = 7 weeks...
-    //     pub vest_expiration: u64,      // block height when purchase is fully vested
-    //     pub amount_purchased: Uint128, // amount of JUNO originally purchased
-    //     pub already_claimed: Uint128,  // amount of JUNO already claimed
-    //     pub last_claim: u64, // block height of last claim, initially set to block_height when purchased
-    
-    //     //pub closed: bool,    // true if this purchase has been totally claimed
-    // }
 
     // if closed, error
     // if purchase.closed {
@@ -105,13 +92,11 @@ pub fn claim_vestable_checks(
 
 
 
-
-// ~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Calculations
-// ~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~
 pub fn third_dec_ceil(num: Uint128) -> Result<Uint128, ContractError> {
     // add 1000, then divide by 1000, thus ROUNDING UP to the nearest 00_000
-    //let current_price_rounded = fake_price.add(Uint128::from(1000_u32)).checked_div(Uint128::from(1000_u32)).map_err(|_| ContractError::GenericError("Construct fake price".to_string()))?;
     // if fake price is 12_345_678 <12.345678 USDC per JUNO>
     // should be 12_346
 
@@ -185,18 +170,6 @@ pub fn calc_amt_vested(
     current_block: u64
 ) -> Result<(Uint128, bool), ContractError> {
 
-    // pub struct Purchase {
-    //     pub vest_period: u8,           // in weeks, 1 = 1 week, 7 = 7 weeks...
-    //     pub vest_expiration: u64,      // block height when purchase is fully vested
-    //     pub amount_purchased: Uint128, // amount of JUNO originally purchased
-    //     pub already_claimed: Uint128,  // amount of JUNO already claimed
-    //     pub last_claim: u64, // block height of last claim, initially set to block_height when purchased
-    
-    //     pub closed: bool,    // true if this purchase has been totally claimed
-    // }
-
-    //let mut amount_to_be_sent = Uint128::from(0_u128);
-
     // amount_purchased - already_claimed = amount_left_to_claim
     let amount_left = purchase.amount_purchased
         .checked_sub(purchase.already_claimed)
@@ -210,7 +183,6 @@ pub fn calc_amt_vested(
             return Ok((amount_left, true));
         }
     };
-
 
     // use vest_period & amount_purchased to determine amount vested_per_block
     // amount vested per block will be 
@@ -242,29 +214,3 @@ pub fn calc_amt_vested(
 
 
 
-// calc vest rate
-// vesting_length into blocks
-// total_amount / blocks_in_vesting_length
-
-// calc amount to vest
-
-// total_amount - amount_left = total_amount_left_to_vest
-
-// here's the other thing
-
-// basically if I'm not bullish on Juno and/or I don't think price is going to go up > 5% in the span of a 2 week
-// vesting period
-
-// why would I not just sell JUNO -> USDC, then buy JUNO at a 5% discount
-
-// if everyone thinks this, and everyone does it
-
-// everyone sells JUNO for USDC, dumping price
-
-// everyone buys JUNO at a 5% discount of the dumped price
-
-// community pool gets a very small amount of USDC
-
-// which it then LPs as POL
-
-// which they then sell the JUNO they bought for USDC into that pool
